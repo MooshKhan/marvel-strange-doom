@@ -1,0 +1,54 @@
+.explorer {
+  padding: 24px;
+}
+
+.load-button {
+  margin: 20px 0;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #b91c1c;
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+
+.load-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.load-button:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 4px;
+}
+
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.character-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.character-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+}
+
+.character-info {
+  padding: 16px;
+}
+
+.character-info p {
+  margin-top: 8px;
+}
