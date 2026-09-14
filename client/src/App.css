@@ -65,3 +65,37 @@
 .pagination .load-button {
   margin: 0;
 }
+
+.search-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.search-form label {
+  width: 100%;
+}
+
+.search-form input {
+  box-sizing: border-box;
+  width: 320px;
+  max-width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+}
+
+.search-form input:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+.search-form .load-button {
+  margin: 0;
+}

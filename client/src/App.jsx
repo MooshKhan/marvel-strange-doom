@@ -8,49 +8,92 @@ function App() {
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [pagination, setPagination] = useState(null);
+  const [searchInput, setSearchInput] = useState("");
+const [activeSearch, setActiveSearch] = useState("");
 
-  async function loadCharacters(page = 1) {
-    setStatus("loading");
-    setError("");
-  
-    try {
-      const response = await fetch(`${API_URL}?page=${page}`);
-  
-      if (!response.ok) {
-        throw new Error(`Request failed: HTTP ${response.status}`);
-      }
-  
-      const data = await response.json();
-  
-      if (
-        !Array.isArray(data.characters) ||
-        !data.pagination ||
-        !Number.isInteger(data.pagination.page)
-      ) {
-        throw new Error("The API returned an unexpected response.");
-      }
-  
-      setCharacters(data.characters);
-      setPagination(data.pagination);
-      setStatus("success");
-    } catch (error) {
-      setError(error.message);
-      setStatus("error");
+async function loadCharacters(page = 1, search = activeSearch) {
+  setStatus("loading");
+  setError("");
+
+  try {
+    const params = new URLSearchParams({
+      page: String(page),
+      search,
+    });
+
+    const response = await fetch(`${API_URL}?${params}`);
+
+    if (!response.ok) {
+      throw new Error(`Request failed: HTTP ${response.status}`);
     }
+
+    const data = await response.json();
+
+    if (
+      !Array.isArray(data.characters) ||
+      !data.pagination ||
+      !Number.isInteger(data.pagination.page)
+    ) {
+      throw new Error("The API returned an unexpected response.");
+    }
+
+    setCharacters(data.characters);
+    setPagination(data.pagination);
+    setActiveSearch(search);
+    setStatus("success");
+  } catch (error) {
+    setError(error.message);
+    setStatus("error");
   }
+}
+function handleSearch(event) {
+  event.preventDefault();
+
+  if (status === "loading") {
+    return;
+  }
+
+  loadCharacters(1, searchInput.trim());
+}
 
   return (
     <main className="explorer">
       <h1>Marvel Character Explorer</h1>
       <p>Discover Marvel heroes and villains.</p>
 
-      <button
-        className="load-button"
-        onClick={() => loadCharacters(1)}
-        disabled={status === "loading"}
-      >
-        {status === "loading" ? "Loading..." : "Load Marvel characters"}
-      </button>
+      <form className="search-form" onSubmit={handleSearch} role="search">
+  <label htmlFor="character-search">Search by character name</label>
+
+  <input
+    id="character-search"
+    type="search"
+    value={searchInput}
+    onChange={(event) => setSearchInput(event.target.value)}
+    placeholder="Try Hulk or Spider"
+    maxLength={100}
+    disabled={status === "loading"}
+  />
+
+  <button
+    className="load-button"
+    type="submit"
+    disabled={status === "loading"}
+  >
+    {status === "loading" ? "Searching..." : "Search"}
+  </button>
+
+  <button
+    className="load-button"
+    type="button"
+    disabled={status === "loading"}
+    onClick={() => {
+      setSearchInput("");
+      loadCharacters(1, "");
+    }}
+  >
+    Show all
+  </button>
+</form>
 
       {error && <p role="alert">{error}</p>}
 
@@ -61,7 +104,7 @@ function App() {
       ? characters.length === 0
         ? "No characters found."
         : `Showing ${characters.length} of ${pagination.total} characters.`
-      : "Load characters to begin."}
+      : "Search for a character or choose Show all."}
 </p>
 
 {pagination && pagination.totalPages > 0 && (

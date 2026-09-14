@@ -22,12 +22,29 @@ app.get("/api/characters", async (req, res) => {
         error: "Page must be a positive whole number within the supported range.",
       });
     }
+
+    const rawSearch = req.query.search ?? "";
+
+if (typeof rawSearch !== "string" || rawSearch.length > 100) {
+  return res.status(400).json({
+    error: "Search must be text with no more than 100 characters.",
+  });
+}
+
+const search = rawSearch.trim();
+
+// Treat punctuation as literal text, not special regex instructions.
+const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const filter = search
+  ? { name: { $regex: escapedSearch, $options: "i" } }
+  : {};
   
     try {
-      const total = await Character.countDocuments({});
+      const total = await Character.countDocuments(filter);
       const totalPages = Math.ceil(total / limit);
   
-      const characters = await Character.find({})
+      const characters = await Character.find(filter)
         .sort({ name: 1, sourceId: 1 })
         .skip(skip)
         .limit(limit)
