@@ -10,8 +10,14 @@ function App() {
   const [pagination, setPagination] = useState(null);
   const [searchInput, setSearchInput] = useState("");
 const [activeSearch, setActiveSearch] = useState("");
+const [alignmentInput, setAlignmentInput] = useState("all");
+const [activeAlignment, setActiveAlignment] = useState("all");
 
-async function loadCharacters(page = 1, search = activeSearch) {
+async function loadCharacters(
+  page = 1,
+  search = activeSearch,
+  alignment = activeAlignment
+) {
   setStatus("loading");
   setError("");
 
@@ -19,6 +25,7 @@ async function loadCharacters(page = 1, search = activeSearch) {
     const params = new URLSearchParams({
       page: String(page),
       search,
+      alignment,
     });
 
     const response = await fetch(`${API_URL}?${params}`);
@@ -39,7 +46,7 @@ async function loadCharacters(page = 1, search = activeSearch) {
 
     setCharacters(data.characters);
     setPagination(data.pagination);
-    setActiveSearch(search);
+    setActiveAlignment(alignment);
     setStatus("success");
   } catch (error) {
     setError(error.message);
@@ -53,7 +60,7 @@ function handleSearch(event) {
     return;
   }
 
-  loadCharacters(1, searchInput.trim());
+  loadCharacters(1, searchInput.trim(), alignmentInput);
 }
 
   return (
@@ -72,7 +79,23 @@ function handleSearch(event) {
     placeholder="Try Hulk or Spider"
     maxLength={100}
     disabled={status === "loading"}
+    
   />
+
+<label htmlFor="alignment-filter">Alignment</label>
+
+<select
+  id="alignment-filter"
+  value={alignmentInput}
+  onChange={(event) => setAlignmentInput(event.target.value)}
+  disabled={status === "loading"}
+>
+  <option value="all">All alignments</option>
+  <option value="good">Good</option>
+  <option value="bad">Bad</option>
+  <option value="neutral">Neutral</option>
+  <option value="unknown">Unknown</option>
+</select>
 
   <button
     className="load-button"
@@ -111,10 +134,11 @@ function handleSearch(event) {
   <nav className="pagination" aria-label="Character pages">
     <button
       className="load-button"
-      onClick={() => loadCharacters(pagination.page - 1)}
-      disabled={
-        status === "loading" || !pagination.hasPreviousPage
-      }
+      onClick={() => {
+        setSearchInput("");
+        setAlignmentInput("all");
+        loadCharacters(1, "", "all");
+      }}
     >
       Previous
     </button>

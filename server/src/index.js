@@ -39,6 +39,29 @@ const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const filter = search
   ? { name: { $regex: escapedSearch, $options: "i" } }
   : {};
+
+  const alignment = req.query.alignment ?? "all";
+
+const allowedAlignments = [
+  "all",
+  "good",
+  "bad",
+  "neutral",
+  "unknown",
+];
+
+if (
+  typeof alignment !== "string" ||
+  !allowedAlignments.includes(alignment)
+) {
+  return res.status(400).json({
+    error: "Alignment must be all, good, bad, neutral, or unknown.",
+  });
+}
+
+if (alignment !== "all") {
+  filter["biography.alignment"] = alignment;
+}
   
     try {
       const total = await Character.countDocuments(filter);

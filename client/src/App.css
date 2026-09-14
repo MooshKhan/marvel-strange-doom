@@ -79,7 +79,8 @@
   width: 100%;
 }
 
-.search-form input {
+.search-form input,
+.search-form select {
   box-sizing: border-box;
   width: 320px;
   max-width: 100%;
@@ -91,7 +92,8 @@
   font: inherit;
 }
 
-.search-form input:focus-visible {
+.search-form input:focus-visible,
+.search-form select:focus-visible {
   outline: 3px solid #f59e0b;
   outline-offset: 2px;
 }
