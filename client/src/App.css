@@ -52,3 +52,16 @@
 .character-info p {
   margin-top: 8px;
 }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.pagination .load-button {
+  margin: 0;
+}

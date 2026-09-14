@@ -5,15 +5,45 @@ import Character from "./models/Character.js";
 const app = express();
 const PORT = 3001;
 
-// Return the first 20 characters in alphabetical order.
+// Return one page of characters in alphabetical order.
 app.get("/api/characters", async (req, res) => {
+    const rawPage = req.query.page ?? "1";
+    const page = Number(rawPage);
+    const limit = 20;
+    const skip = (page - 1) * limit;
+  
+    if (
+      typeof rawPage !== "string" ||
+      !Number.isSafeInteger(page) ||
+      page < 1 ||
+      !Number.isSafeInteger(skip)
+    ) {
+      return res.status(400).json({
+        error: "Page must be a positive whole number within the supported range.",
+      });
+    }
+  
     try {
+      const total = await Character.countDocuments({});
+      const totalPages = Math.ceil(total / limit);
+  
       const characters = await Character.find({})
         .sort({ name: 1, sourceId: 1 })
-        .limit(20)
+        .skip(skip)
+        .limit(limit)
         .lean();
   
-      res.json(characters);
+      res.json({
+        characters,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1,
+        },
+      });
     } catch (error) {
       console.error("Character list failed:", error.message);
   

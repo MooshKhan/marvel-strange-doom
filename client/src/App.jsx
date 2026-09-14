@@ -7,26 +7,31 @@ function App() {
   const [characters, setCharacters] = useState([]);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
+  const [pagination, setPagination] = useState(null);
 
-  async function loadCharacters() {
+  async function loadCharacters(page = 1) {
     setStatus("loading");
     setError("");
-    setCharacters([]);
-
+  
     try {
-      const response = await fetch(API_URL);
-
+      const response = await fetch(`${API_URL}?page=${page}`);
+  
       if (!response.ok) {
         throw new Error(`Request failed: HTTP ${response.status}`);
       }
-
+  
       const data = await response.json();
-
-      if (!Array.isArray(data)) {
-        throw new Error("Expected a list of characters from the API.");
+  
+      if (
+        !Array.isArray(data.characters) ||
+        !data.pagination ||
+        !Number.isInteger(data.pagination.page)
+      ) {
+        throw new Error("The API returned an unexpected response.");
       }
-
-      setCharacters(data);
+  
+      setCharacters(data.characters);
+      setPagination(data.pagination);
       setStatus("success");
     } catch (error) {
       setError(error.message);
@@ -41,7 +46,7 @@ function App() {
 
       <button
         className="load-button"
-        onClick={loadCharacters}
+        onClick={() => loadCharacters(1)}
         disabled={status === "loading"}
       >
         {status === "loading" ? "Loading..." : "Load Marvel characters"}
@@ -49,14 +54,43 @@ function App() {
 
       {error && <p role="alert">{error}</p>}
 
-      {status === "success" && (
-        <p role="status">
-          {characters.length === 0
-            ? "No characters found."
-            : `Showing ${characters.length} characters.`}
-        </p>
-      )}
+      <p role="status">
+  {status === "loading"
+    ? "Loading characters..."
+    : pagination
+      ? characters.length === 0
+        ? "No characters found."
+        : `Showing ${characters.length} of ${pagination.total} characters.`
+      : "Load characters to begin."}
+</p>
 
+{pagination && pagination.totalPages > 0 && (
+  <nav className="pagination" aria-label="Character pages">
+    <button
+      className="load-button"
+      onClick={() => loadCharacters(pagination.page - 1)}
+      disabled={
+        status === "loading" || !pagination.hasPreviousPage
+      }
+    >
+      Previous
+    </button>
+
+    <span>
+      Page {pagination.page} of {pagination.totalPages}
+    </span>
+
+    <button
+      className="load-button"
+      onClick={() => loadCharacters(pagination.page + 1)}
+      disabled={
+        status === "loading" || !pagination.hasNextPage
+      }
+    >
+      Next
+    </button>
+  </nav>
+)}
       <div className="character-grid">
         {characters.map((character) => (
           <article className="character-card" key={character._id}>
