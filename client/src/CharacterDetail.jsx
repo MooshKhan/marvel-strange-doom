@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
+import CharacterNotes from "./CharacterNotes.jsx";
+import { useAuth } from "./auth-context.js";
 
 function CharacterDetail() {
+  const { user, loading: authLoading } = useAuth();
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
 const galleryQuery = searchParams.toString();
@@ -86,6 +89,20 @@ const galleryUrl = galleryQuery ? `/?${galleryQuery}` : "/";
             Alignment: {character.biography?.alignment || "Unknown"}
           </p>
         </article>
+      )}
+
+      {status === "success" && character && user && (
+        <CharacterNotes
+          key={`${character.slug}-${user.id}`}
+          slug={character.slug}
+          characterName={character.name}
+        />
+      )}
+      {status === "success" && character && !user && !authLoading && (
+        <section className="character-notes">
+          <h2>Your private notes</h2>
+          <p><Link to="/account" state={{ from: `/characters/${slug}${galleryQuery ? `?${galleryQuery}` : ""}` }}>Sign in or create an account</Link> to write, edit and save notes about {character.name}.</p>
+        </section>
       )}
     </main>
   );

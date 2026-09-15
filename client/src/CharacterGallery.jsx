@@ -17,6 +17,11 @@ function CharacterGallery() {
     alignment: activeAlignment,
   }).toString();
 
+  return <GalleryResults key={`${queryString}-${location.key}`} queryString={queryString}
+    activeSearch={activeSearch} activeAlignment={activeAlignment} setSearchParams={setSearchParams} />;
+}
+
+function GalleryResults({ queryString, activeSearch, activeAlignment, setSearchParams }) {
   const [characters, setCharacters] = useState([]);
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
@@ -26,15 +31,6 @@ function CharacterGallery() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const params = new URLSearchParams(queryString);
-
-    setSearchInput(params.get("search") ?? "");
-    setAlignmentInput(params.get("alignment") ?? "all");
-    setCharacters([]);
-    setPagination(null);
-    setError("");
-    setStatus("loading");
-
     async function fetchCharacters() {
       try {
         const response = await fetch(`${API_URL}?${queryString}`, {
@@ -71,7 +67,7 @@ function CharacterGallery() {
     fetchCharacters();
 
     return () => controller.abort();
-  }, [queryString, location.key]);
+  }, [queryString]);
 
   function navigateGallery(
     page = 1,
@@ -212,7 +208,7 @@ function CharacterGallery() {
             <div className="character-info">
               <h2>
                 <Link
-                  to={`/characters/${encodeURIComponent(character.slug)}`}
+                  to={`/characters/${encodeURIComponent(character.slug)}?${queryString}`}
                 >
                   {character.name}
                 </Link>

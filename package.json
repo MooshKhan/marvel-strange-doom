@@ -1,0 +1,11 @@
+{
+  "name": "marvel-character-explorer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm ci --prefix server && npm ci --prefix client --include=dev && npm run build --prefix client",
+    "start": "npm start --prefix server",
+    "test": "npm run build --prefix client && npm run lint --prefix client && npm test --prefix server"
+  },
+  "engines": { "node": ">=24 <25" }
+}

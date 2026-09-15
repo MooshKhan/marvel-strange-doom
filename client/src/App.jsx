@@ -1,12 +1,16 @@
 import { BrowserRouter, Link, Route, Routes } from "react-router";
 import CharacterGallery from "./CharacterGallery.jsx";
 import CharacterDetail from "./CharacterDetail.jsx";
+import { AccountBar, AccountPage, AuthProvider } from "./Auth.jsx";
 import "./App.css";
 
 function App() {
   return (
     <BrowserRouter>
+      <AuthProvider>
+      <AccountBar />
       <Routes>
+        <Route path="/account" element={<AccountPage />} />
         <Route path="/" element={<CharacterGallery />} />
 
         <Route
@@ -24,6 +28,7 @@ function App() {
           }
         />
       </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

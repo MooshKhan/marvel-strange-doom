@@ -4,15 +4,23 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node --watch --env-file=.env src/index.js"
+    "test": "node --test test/*.test.js",
+    "dev": "node --watch --env-file=.env src/index.js",
+    "start": "node src/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "connect-mongo": "^6.0.0",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
     "mongoose": "^9.10.0"
+  },
+  "engines": {
+    "node": ">=24 <25"
   }
 }
