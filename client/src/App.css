@@ -101,3 +101,26 @@
 .search-form .load-button {
   margin: 0;
 }
+
+.explorer a {
+  color: var(--text-h);
+  text-underline-offset: 4px;
+}
+
+.explorer a:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 4px;
+}
+
+.character-detail img {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  margin: 24px auto;
+  border-radius: 12px;
+}
+
+.character-detail p {
+  margin-top: 12px;
+}
