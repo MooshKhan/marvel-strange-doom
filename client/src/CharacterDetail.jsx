@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 
 function CharacterDetail() {
   const { slug } = useParams();
+  const [searchParams] = useSearchParams();
+const galleryQuery = searchParams.toString();
+const galleryUrl = galleryQuery ? `/?${galleryQuery}` : "/";
   const [character, setCharacter] = useState(null);
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
@@ -50,7 +53,7 @@ function CharacterDetail() {
 
   return (
     <main className="explorer">
-      <Link to="/">Back to gallery</Link>
+      <Link to={galleryUrl}>Back to gallery</Link>
 
       {status === "loading" && (
         <p role="status">Loading character...</p>
