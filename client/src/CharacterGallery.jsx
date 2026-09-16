@@ -110,7 +110,7 @@ function GalleryResults({ queryString, activeSearch, activeAlignment, setSearchP
           type="search"
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
-          placeholder="Try Hulk or Spider"
+          placeholder="Try Strange or Doom"
           maxLength={100}
           disabled={status === "loading"}
         />
