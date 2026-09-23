@@ -1,12 +1,20 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   Link,
   useParams,
   useSearchParams,
 } from "react-router";
 
-import CharacterNotes from "./CharacterNotes.jsx";
-import { useAuth } from "./auth-context.js";
+import CharacterNotes from "./CharacterNotes";
+
+import {
+  useAuth,
+} from "./auth-context";
+
 import type {
   Character,
   LoadStatus,
@@ -18,29 +26,48 @@ function CharacterDetail() {
     loading: authLoading,
   } = useAuth();
 
-  const { slug } = useParams();
-  const [searchParams] = useSearchParams();
+  const { slug } =
+    useParams();
 
-  const galleryQuery = searchParams.toString();
-  const galleryUrl = galleryQuery
-    ? `/?${galleryQuery}`
-    : "/";
+  const [searchParams] =
+    useSearchParams();
 
-  const [character, setCharacter] =
-    useState<Character | null>(null);
+  const galleryQuery =
+    searchParams.toString();
+
+  const galleryUrl =
+    galleryQuery
+      ? `/?${galleryQuery}`
+      : "/";
+
+  const [
+    character,
+    setCharacter,
+  ] =
+    useState<Character | null>(
+      null
+    );
 
   const [status, setStatus] =
-    useState<LoadStatus>("loading");
+    useState<LoadStatus>(
+      "loading"
+    );
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
   useEffect(() => {
-    const controller = new AbortController();
+    const controller =
+      new AbortController();
 
     async function loadCharacter() {
       if (!slug) {
-        setError("Character slug is missing.");
+        setError(
+          "Character slug is missing."
+        );
+
         setStatus("error");
+
         return;
       }
 
@@ -49,14 +76,21 @@ function CharacterDetail() {
       setCharacter(null);
 
       try {
-        const response = await fetch(
-          `/api/characters/${encodeURIComponent(slug)}`,
-          {
-            signal: controller.signal,
-          }
-        );
+        const response =
+          await fetch(
+            `/api/characters/${encodeURIComponent(
+              slug
+            )}`,
+            {
+              signal:
+                controller.signal,
+            }
+          );
 
-        if (response.status === 404) {
+        if (
+          response.status ===
+          404
+        ) {
           throw new Error(
             "Character not found."
           );
@@ -71,12 +105,18 @@ function CharacterDetail() {
         const data =
           (await response.json()) as Character;
 
-        if (!controller.signal.aborted) {
+        if (
+          !controller.signal.aborted
+        ) {
           setCharacter(data);
-          setStatus("success");
+          setStatus(
+            "success"
+          );
         }
       } catch (error) {
-        if (!controller.signal.aborted) {
+        if (
+          !controller.signal.aborted
+        ) {
           setError(
             error instanceof Error
               ? error.message
@@ -90,7 +130,8 @@ function CharacterDetail() {
 
     loadCharacter();
 
-    return () => controller.abort();
+    return () =>
+      controller.abort();
   }, [slug]);
 
   const imageUrl =
@@ -110,51 +151,70 @@ function CharacterDetail() {
       )}
 
       {status === "error" && (
-        <p role="alert">{error}</p>
+        <p role="alert">
+          {error}
+        </p>
       )}
 
-      {status === "success" && character && (
-        <article className="character-detail">
-          <h1>{character.name}</h1>
+      {status === "success" &&
+        character && (
+          <article className="character-detail">
+            <h1>
+              {character.name}
+            </h1>
 
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={character.name}
-              width="480"
-              height="640"
-            />
-          ) : (
-            <p>Image unavailable.</p>
-          )}
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={
+                  character.name
+                }
+                width="480"
+                height="640"
+              />
+            ) : (
+              <p>
+                Image unavailable.
+              </p>
+            )}
 
-          <p>
-            Full name:{" "}
-            {character.biography.fullName ||
-              "Unknown"}
-          </p>
+            <p>
+              Full name:{" "}
+              {character
+                .biography
+                .fullName ||
+                "Unknown"}
+            </p>
 
-          <p>
-            Publisher:{" "}
-            {character.biography.publisher ||
-              "Unknown"}
-          </p>
+            <p>
+              Publisher:{" "}
+              {character
+                .biography
+                .publisher ||
+                "Unknown"}
+            </p>
 
-          <p>
-            Alignment:{" "}
-            {character.biography.alignment ||
-              "Unknown"}
-          </p>
-        </article>
-      )}
+            <p>
+              Alignment:{" "}
+              {character
+                .biography
+                .alignment ||
+                "Unknown"}
+            </p>
+          </article>
+        )}
 
       {status === "success" &&
         character &&
         user && (
           <CharacterNotes
             key={`${character.slug}-${user.id}`}
-            slug={character.slug}
-            characterName={character.name}
+            slug={
+              character.slug
+            }
+            characterName={
+              character.name
+            }
           />
         )}
 
@@ -163,23 +223,31 @@ function CharacterDetail() {
         !user &&
         !authLoading && (
           <section className="character-notes">
-            <h2>Your private notes</h2>
+            <h2>
+              Your private
+              notes
+            </h2>
 
             <p>
               <Link
                 to="/account"
                 state={{
-                  from: `/characters/${slug}${
-                    galleryQuery
-                      ? `?${galleryQuery}`
-                      : ""
-                  }`,
+                  from:
+                    `/characters/${slug}${
+                      galleryQuery
+                        ? `?${galleryQuery}`
+                        : ""
+                    }`,
                 }}
               >
-                Sign in or create an account
+                Sign in or
+                create an
+                account
               </Link>{" "}
-              to write, edit and save notes
-              about {character.name}.
+              to write, edit
+              and save notes
+              about{" "}
+              {character.name}.
             </p>
           </section>
         )}

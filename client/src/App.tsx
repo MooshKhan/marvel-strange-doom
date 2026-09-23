@@ -12,7 +12,7 @@ import {
   AccountBar,
   AccountPage,
   AuthProvider,
-} from "./Auth.jsx";
+} from "./Auth";
 
 import "./App.css";
 
@@ -25,24 +25,32 @@ function App() {
         <Routes>
           <Route
             path="/account"
-            element={<AccountPage />}
+            element={
+              <AccountPage />
+            }
           />
 
           <Route
             path="/"
-            element={<CharacterGallery />}
+            element={
+              <CharacterGallery />
+            }
           />
 
           <Route
             path="/characters/:slug"
-            element={<CharacterDetail />}
+            element={
+              <CharacterDetail />
+            }
           />
 
           <Route
             path="*"
             element={
               <main className="explorer">
-                <h1>Page not found</h1>
+                <h1>
+                  Page not found
+                </h1>
 
                 <Link to="/">
                   Back to gallery
