@@ -1,36 +1,9 @@
 import mongoose from "mongoose";
 import MongoStore from "connect-mongo";
 
-import type { Express } from "express";
-import type { Store } from "express-session";
-
 import {
-  createApp as createJavaScriptApp,
+  createApp,
 } from "./app.js";
-
-/*
- * app.js is still JavaScript during this migration sprint.
- *
- * TypeScript cannot yet infer its full createApp()
- * configuration correctly, so this is a temporary bridge.
- *
- * Once app.js becomes app.ts in the next sprint,
- * this type bridge can be removed.
- */
-type CreateAppOptions = {
-  store: Store;
-  secret: string;
-  production?: boolean;
-  models?: Record<string, unknown>;
-  ready?: () => boolean;
-};
-
-type CreateApp = (
-  options: CreateAppOptions
-) => Express;
-
-const createApp =
-  createJavaScriptApp as unknown as CreateApp;
 
 try {
   const mongoUri =
@@ -80,7 +53,9 @@ try {
 
   store.on(
     "error",
-    (error: Error) => {
+    (
+      error: Error
+    ) => {
       console.error(
         "Session store error:",
         error.name
@@ -135,13 +110,17 @@ try {
           async () => {
             await mongoose.disconnect();
 
-            process.exit(0);
+            process.exit(
+              0
+            );
           }
         );
 
         setTimeout(
           () =>
-            process.exit(1),
+            process.exit(
+              1
+            ),
           10000
         ).unref();
       }
