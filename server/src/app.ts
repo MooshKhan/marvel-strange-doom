@@ -291,7 +291,9 @@ export function createApp(
           true,
 
         secure:
-          production,
+          production
+          ? "auto"
+          : false,
 
         sameSite:
           "lax",

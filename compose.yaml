@@ -1,0 +1,41 @@
+services:
+  mongo:
+    image: mongo:7.0
+
+    ports:
+      - "27017:27017"
+
+    volumes:
+      - marvel-mongo-data:/data/db
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "quit(db.adminCommand('ping').ok ? 0 : 2)"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  app:
+    build:
+      context: .
+
+    ports:
+      - "3001:3001"
+
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/marvel_explorer
+      SESSION_SECRET: ${SESSION_SECRET}
+
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  marvel-mongo-data:
