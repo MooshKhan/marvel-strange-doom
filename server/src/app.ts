@@ -3,6 +3,12 @@ import express, {
   type Express,
 } from "express";
 
+import {
+  CHARACTER_CACHE_TTL_SECONDS,
+  characterListCacheKey,
+  type CacheClient,
+} from "./cache.js";
+
 import mongoose from "mongoose";
 
 import session, {
@@ -45,6 +51,8 @@ type AppModels = {
 };
 
 export type CreateAppOptions = {
+  cache?: CacheClient;
+
   store?: Store;
 
   secret?: string;
@@ -139,6 +147,7 @@ export function createApp(
     ready = () =>
       mongoose.connection
         .readyState === 1,
+    cache,
   }: CreateAppOptions = {}
 ): Express {
   if (
@@ -332,16 +341,16 @@ export function createApp(
         unknown =
         req.query.page ??
         "1";
-
+  
       const page =
         Number(rawPage);
-
+  
       const limit = 20;
-
+  
       const skip =
         (page - 1) *
         limit;
-
+  
       if (
         typeof rawPage !==
           "string" ||
@@ -359,15 +368,15 @@ export function createApp(
           error:
             "Page must be a positive whole number within the supported range.",
         });
-
+  
         return;
       }
-
+  
       const rawSearch:
         unknown =
         req.query.search ??
         "";
-
+  
       if (
         typeof rawSearch !==
           "string" ||
@@ -380,23 +389,19 @@ export function createApp(
           error:
             "Search must be text with no more than 100 characters.",
         });
-
+  
         return;
       }
-
+  
       const search =
         rawSearch.trim();
-
-      /*
-       * Treat punctuation as literal
-       * text instead of regex syntax.
-       */
+  
       const escapedSearch =
         search.replace(
           /[.*+?^${}()|[\]\\]/g,
           "\\$&"
         );
-
+  
       const filter:
         CharacterFilter =
         search
@@ -404,19 +409,19 @@ export function createApp(
               name: {
                 $regex:
                   escapedSearch,
-
+  
                 $options:
                   "i",
               },
             }
           : {};
-
+  
       const rawAlignment:
         unknown =
         req.query
           .alignment ??
         "all";
-
+  
       if (
         typeof rawAlignment !==
           "string" ||
@@ -430,10 +435,10 @@ export function createApp(
           error:
             "Alignment must be all, good, bad, neutral, or unknown.",
         });
-
+  
         return;
       }
-
+  
       if (
         rawAlignment !==
         "all"
@@ -443,20 +448,89 @@ export function createApp(
         ] =
           rawAlignment;
       }
-
+  
+      /*
+       * Everything above this point validates
+       * user-controlled input.
+       *
+       * Only after validation do we generate
+       * a cache key.
+       */
+      const cacheKey =
+        characterListCacheKey({
+          page,
+          search,
+          alignment:
+            rawAlignment,
+        });
+  
+      /*
+       * -----------------------------
+       * CACHE LOOKUP
+       * -----------------------------
+       */
+  
+      if (cache) {
+        try {
+          const cached =
+            await cache.get(
+              cacheKey
+            );
+  
+          if (cached) {
+            const parsed:
+              unknown =
+              JSON.parse(
+                cached
+              );
+  
+            res.set(
+              "X-Cache",
+              "HIT"
+            );
+  
+            res.json(
+              parsed
+            );
+  
+            return;
+          }
+        } catch (
+          error
+        ) {
+          console.error(
+            "Cache read failed:",
+            errorMessage(
+              error
+            )
+          );
+  
+          /*
+           * Cache failure is NOT fatal.
+           * Continue to MongoDB.
+           */
+        }
+      }
+  
+      /*
+       * -----------------------------
+       * SOURCE OF TRUTH: MONGODB
+       * -----------------------------
+       */
+  
       try {
         const total =
           await Character
             .countDocuments(
               filter
             );
-
+  
         const totalPages =
           Math.ceil(
             total /
               limit
           );
-
+  
         const characters =
           await Character.find(
             filter
@@ -468,24 +542,67 @@ export function createApp(
             .skip(skip)
             .limit(limit)
             .lean();
-
-        res.json({
+  
+        const responseBody = {
           characters,
-
+  
           pagination: {
             page,
             limit,
             total,
             totalPages,
-
+  
             hasNextPage:
               page <
               totalPages,
-
+  
             hasPreviousPage:
               page > 1,
           },
-        });
+        };
+  
+        /*
+         * -----------------------------
+         * POPULATE CACHE
+         * -----------------------------
+         */
+  
+        if (cache) {
+          try {
+            await cache.setEx(
+              cacheKey,
+              CHARACTER_CACHE_TTL_SECONDS,
+              JSON.stringify(
+                responseBody
+              )
+            );
+          } catch (
+            error
+          ) {
+            console.error(
+              "Cache write failed:",
+              errorMessage(
+                error
+              )
+            );
+  
+            /*
+             * Mongo succeeded, so the request
+             * itself should still succeed.
+             */
+          }
+        }
+  
+        res.set(
+          "X-Cache",
+          cache
+            ? "MISS"
+            : "BYPASS"
+        );
+  
+        res.json(
+          responseBody
+        );
       } catch (
         error
       ) {
@@ -495,7 +612,7 @@ export function createApp(
             error
           )
         );
-
+  
         res.status(
           500
         ).json({

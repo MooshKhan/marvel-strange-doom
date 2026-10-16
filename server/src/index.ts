@@ -1,9 +1,21 @@
 import mongoose from "mongoose";
 import MongoStore from "connect-mongo";
+import {
+  createClient,
+} from "redis";
 
 import {
   createApp,
 } from "./app.js";
+
+import type {
+  CacheClient,
+} from "./cache.js";
+
+let redisClient:
+  ReturnType<
+    typeof createClient
+  > | null = null;
 
 try {
   const mongoUri =
@@ -11,6 +23,9 @@ try {
 
   const sessionSecret =
     process.env.SESSION_SECRET;
+
+  const redisUrl =
+    process.env.REDIS_URL;
 
   if (!mongoUri) {
     throw new Error(
@@ -63,6 +78,65 @@ try {
     }
   );
 
+  /*
+   * Redis is intentionally optional.
+   *
+   * MongoDB remains the source of truth.
+   * If Redis is unavailable, Marvel should
+   * continue working without caching.
+   */
+  let cache:
+    CacheClient | undefined;
+
+  if (redisUrl) {
+    try {
+      redisClient =
+        createClient({
+          url: redisUrl,
+        });
+
+      redisClient.on(
+        "error",
+        (
+          error: Error
+        ) => {
+          console.error(
+            "Redis error:",
+            error.message
+          );
+        }
+      );
+
+      await redisClient.connect();
+
+      cache =
+        redisClient;
+
+      console.log(
+        "Redis cache connected."
+      );
+    } catch (
+      error
+    ) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unknown Redis connection error.";
+
+      console.error(
+        "Redis unavailable; continuing without cache:",
+        message
+      );
+
+      redisClient =
+        null;
+    }
+  } else {
+    console.log(
+      "REDIS_URL not set; cache disabled."
+    );
+  }
+
   const production =
     process.env.NODE_ENV ===
     "production";
@@ -73,6 +147,7 @@ try {
       secret:
         sessionSecret,
       production,
+      cache,
     });
 
   const port =
@@ -108,7 +183,27 @@ try {
       () => {
         server.close(
           async () => {
+            /*
+             * Mongo is durable primary
+             * storage. Close it cleanly.
+             */
             await mongoose.disconnect();
+
+            /*
+             * Redis is optional.
+             * Closing the process would
+             * remove this connection anyway,
+             * but we attempt a graceful quit.
+             */
+            if (
+              redisClient?.isOpen
+            ) {
+              try {
+                await redisClient.quit();
+              } catch {
+                // Process is shutting down.
+              }
+            }
 
             process.exit(
               0
@@ -141,6 +236,16 @@ try {
   );
 
   await mongoose.disconnect();
+
+  if (
+    redisClient?.isOpen
+  ) {
+    try {
+      await redisClient.quit();
+    } catch {
+      // Startup already failed.
+    }
+  }
 
   process.exitCode = 1;
 }
